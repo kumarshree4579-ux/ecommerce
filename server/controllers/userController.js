@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import User from "../models/userModel.js";
+import generatetoken from "../config/generateToken.js";
 
 // Get all users
 export const getAllUser = async (req, res) => {
@@ -36,13 +37,13 @@ export const addUser = async (req, res) => {
         .json({ message: "user already exist", success: false });
     }
 
-    const slte= await bcrypt.genSalt(12)
-    const hashpassword= await bcrypt.hash(password, slte)
+    const slte = await bcrypt.genSalt(12)
+    const hashpassword = await bcrypt.hash(password, slte)
 
     const newUser = await User.create({
       name,
       email,
-      password:hashpassword,
+      password: hashpassword,
       role,
       address,
       phone,
@@ -61,3 +62,28 @@ export const addUser = async (req, res) => {
       .json({ message: "Internl server error ", success: false, error });
   }
 };
+
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Credential Error", success: false })
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User Not Found", success: false })
+    }
+    const isMatch = bcrypt.compare(user.password, password)
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid Password", success: false })
+    }
+    const token= generatetoken(user._id)
+    return res.status(200).json({ message: `Welcome back ${user.name}`, success: true , user, token})
+
+
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Internl server error ", success: false, error });
+  }
+}

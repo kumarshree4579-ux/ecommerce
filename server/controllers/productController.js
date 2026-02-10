@@ -3,8 +3,8 @@ import Product from "../models/productModel.js";
 export const addProduct = async (req, res) => {
   try {
     const { name, price, mrp, description } = req.body;
-    const img= req.file
-    console.log("Image Data",img)
+    const img = req.file
+    console.log("Image Data", img)
     if (!name || !price || !mrp || !description) {
       return res
         .status(400)
@@ -15,9 +15,9 @@ export const addProduct = async (req, res) => {
       price,
       mrp,
       description,
-      image:{
-        url:img.path,
-        objectid:img.filename
+      image: {
+        url: img.path,
+        objectid: img.filename
       }
     });
     if (!product) {
@@ -94,3 +94,22 @@ export const getProductById = async (req, res) => {
       .json({ message: "Internal server error", success: false, error });
   }
 };
+
+
+export const statusChange = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findByIdAndUpdate(id);
+    const newStatus = !product.isActive;
+    product.isActive = newStatus;
+    await product.save();
+    return res.status(200).json({
+      message: `Status change ${product.isActive ? "Active" : "InActive"}`
+    });
+
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Internal server error", success: false, error });
+  }
+}
